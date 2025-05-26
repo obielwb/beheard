@@ -25,11 +25,10 @@ language = 'en-US'
 speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, language=language, audio_config=audio_config)
 
 
-reference_text = "This is an audio test to see if the program works."
 enable_miscue, enable_prosody = True, True
 config_json = {
     "GradingSystem": "HundredMark",
-    "Granularity": "Phoneme",
+    "Granularity": "Word",
     "Dimension": "Comprehensive",
     "ScenarioId": "",  # "" is the default scenario or ask product team for a customized one
     "EnableMiscue": enable_miscue,
@@ -37,9 +36,15 @@ config_json = {
     "NBestPhonemeCount": 0,  # > 0 to enable "spoken phoneme" mode, 0 to disable
 }
 pronunciation_config = speechsdk.PronunciationAssessmentConfig(json_string=json.dumps(config_json))
+
+
+# First pass: Transcribe audio
+speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, language=language, audio_config=audio_config)
+result = speech_recognizer.recognize_once_async().get()
+reference_text = result.text
+
+# Second pass: Pronunciation assessment
 pronunciation_config.reference_text = reference_text
-
-
 pronunciation_config.apply_to(speech_recognizer)
 pronunciation_result = speech_recognizer.recognize_once_async().get()
 
